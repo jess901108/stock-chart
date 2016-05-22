@@ -1,0 +1,48 @@
+<p class="lead">Type in the abbrev code of stocks below and see the stock prices</p>
+<form class="form-inline">
+  <div class="form-group">
+    <label class="sr-only" for="stockabbrev">Stock code</label>
+    <input type="text" class="form-control" id="stockabbrev" placeholder="Stock code">
+  </div>
+  <button type="submit" class="btn btn-default">Add</button>
+</form>
+
+<div class="wrap">
+    <div id="charts">
+    
+    </div>
+    
+  <div class="bs-callout bs-callout-info col-md-5" id="sample-element">
+      <h4>Name of stocks</h4>
+      <p>Information about this stock</p>
+  </div>    
+</div>
+
+<script>
+    $(function () {
+
+    $.getJSON('https://www.highcharts.com/samples/data/jsonp.php?filename=aapl-c.json&callback=?', function (data) {
+        // Create the chart
+        $('#charts').highcharts('StockChart', {
+
+
+            rangeSelector : {
+                selected : 1
+            },
+
+            title : {
+                text : 'AAPL Stock Price'
+            },
+
+            series : [{
+                name : 'AAPL',
+                data : data,
+                tooltip: {
+                    valueDecimals: 2
+                }
+            }]
+        });
+    });
+
+});
+</script>
