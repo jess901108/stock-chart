@@ -12,10 +12,8 @@
   "author": "Mengjie Yu <jess901108@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "body-parser": "*",
     "express": "*",
     "express-handlebars": "*",
-    "express-session": "*",
     "firebase": "^2.4.2"
   }
 }

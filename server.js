@@ -1,10 +1,6 @@
 var express = require('express'),
-bodyParser = require('body-parser'),
 path = require('path'),
 exphbs = require('express-handlebars'),
-// methodOverride = require('method-override'),
-session = require('express-session'),
-mongoose = require('mongoose'),
 app = express();
 var port = process.env.PORT || 8080;
 
