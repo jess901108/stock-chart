@@ -1,48 +1,176 @@
-<p class="lead">Type in the abbrev code of stocks below and see the stock prices</p>
-<form class="form-inline">
-  <div class="form-group">
-    <label class="sr-only" for="stockabbrev">Stock code</label>
-    <input type="text" class="form-control" id="stockabbrev" placeholder="Stock code">
-  </div>
-  <button type="submit" class="btn btn-default">Add</button>
-</form>
 
-<div class="wrap">
-    <div id="charts">
-    
-    </div>
-    
-  <div class="bs-callout bs-callout-info col-md-5" id="sample-element">
-      <h4>Name of stocks</h4>
-      <p>Information about this stock</p>
-  </div>    
+
+<p class="lead">Type stock code of your choice below and display the stock prices in chart</p>
+
+
+<div class="content-wrap">
+    <div id="charts"></div>
+    <div id="stocks"></div>  
 </div>
 
-<script>
-    $(function () {
+<script type="text/babel">
+var myFirebaseRef = new Firebase("https://stock-chart.firebaseio.com/");
+ var stockRef = myFirebaseRef.child('stockcodes');
+var seriesOptions=[];
+function format(string){
+    return new Date(string).getTime();
+}
 
-    $.getJSON('https://www.highcharts.com/samples/data/jsonp.php?filename=aapl-c.json&callback=?', function (data) {
-        // Create the chart
-        $('#charts').highcharts('StockChart', {
 
+    let Add = React.createClass({
+    getInitialState: function(){
+        return {
+            stocks:[]
+        }
+    },
+    add: function(e){
+        let self = this;
+        e.preventDefault();
+      let allStocks = this.state.stocks;
+      let newStock = $("#stockabbrev").val();
+      
+      function existed(name){
+          let patt = new RegExp(name,"i");
+        for (var i=0;i<allStocks.length;i++){
+           if (patt.test(allStocks[i].title)){
+              return 1;
+           }
+       }
+       return -1;
+      }
+          
+     if (existed(newStock)>0){
+        $('.msg').text("Sorry, this code is already existed. Please try another one.");
+     }else {
+         
+      $.ajax({ //   quandl api for public historical stock data
+    url: 'https://www.quandl.com/api/v3/datasets/WIKI/'+newStock+'.json?api_key=rzkJVWMSZyTsxtPUkXz2&start_date=2009-5-25',
+    type: 'get',
+    error: function(XMLHttpRequest, textStatus, errorThrown){
+        $(".msg").text("Sorry, We cannot find the stock code in our database, please try again.");
+        console.log('status:' + XMLHttpRequest.status + ', status text: ' + XMLHttpRequest.statusText);
+    },
+    success: function(data){
+    $(".msg").text("");
 
-            rangeSelector : {
-                selected : 1
-            },
-
-            title : {
-                text : 'AAPL Stock Price'
-            },
-
-            series : [{
-                name : 'AAPL',
-                data : data,
-                tooltip: {
-                    valueDecimals: 2
-                }
-            }]
+    let newCode={"title":data.dataset.dataset_code,"description":data.dataset.name.split(')')[0]+")"};
+    allStocks.push(newCode);
+    stockRef.set(allStocks);
+    
+    
+    $("#stockabbrev").val("");
+    }
+         });
+}
+    },
+    delete:function(ind){
+        var currentStock = this.state.stocks;
+        currentStock.splice(ind,1);
+        stockRef.set(currentStock);
+    },
+    
+    componentDidMount: function(){
+        var that = this;
+        
+        myFirebaseRef.on("value",function(snapshot){
+         var database = snapshot.val().stockcodes;
+         seriesOptions = [];
+         var seriesCounter = 0;
+        console.log(database);
+        that.setState({stocks:database});
+            database.forEach(function(obj,i){
+          $.ajax({
+    url: 'https://www.quandl.com/api/v3/datasets/WIKI/'+obj.title+'.json?api_key=rzkJVWMSZyTsxtPUkXz2&start_date=2009-5-25',
+    type: 'get',
+    error: function(XMLHttpRequest, textStatus, errorThrown){
+        if (XMLHttpRequest.status == 404){
+             $(".msg").text("Sorry, We cannot find the stock code in our database, please try again.");
+        }
+       
+        
+        console.log('status:' + XMLHttpRequest.status + ', status text: ' + XMLHttpRequest.statusText);
+    },
+    success: function(data){
+        let stockData=[];
+        data.dataset.data.forEach(function(d){
+            stockData.push([format(d[0]),d[4]]);
         });
+        
+        seriesOptions[i]={
+            name:obj.title,
+            data: stockData.reverse()
+        };
+        seriesCounter+=1;
+        
+        if (seriesCounter == database.length){
+            createChart();
+            console.log("create chart");
+        }
+    }
     });
-
 });
+        
+      },function (errorObject) {
+  console.log("The read failed: " + errorObject.code);
+});
+
+        
+
+
+
+function createChart(){
+    $('#charts').highcharts('StockChart', {
+
+        scrollbar: {
+            enabled: true
+        },
+
+        navigator: {
+            enabled: true
+        },
+
+        rangeSelector: {
+            selected: 4
+        },
+        tooltip: {
+            valueDecimals: 2
+            },
+
+        series: seriesOptions
+    });
+}
+    },
+  render: function(){
+    //   console.log(this.state.stocks);
+    var renderthis = this;
+      return (
+<div>
+    <form className="form-inline">
+        <div className="form-group">
+        <label className="sr-only" for="stockabbrev">Stock code</label>
+        <input type="text" className="form-control" id="stockabbrev" placeholder="Stock code" />
+        </div>
+        <button onClick={this.add} className="btn btn-default">Add</button>
+        
+        <div className="text-danger msg">
+        </div>
+    </form>
+    {this.state.stocks.map(function(itm,i){
+        return <div className="bs-callout bs-callout-info" id="stock-element" key={i}>
+                <button type="button" className="close" aria-label="Close" onClick={()=>renderthis.delete(i)}><span aria-hidden="true">&times;</span></button>
+                <h4>{itm.title}</h4>
+                <p className="text-muted">{itm.description}</p>
+               </div>
+    })}
+    
+</div>
+      );
+  } 
+});
+
+ReactDOM.render(
+<Add />, 
+document.getElementById('stocks'));
+
+
 </script>
