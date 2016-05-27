@@ -1,6 +1,9 @@
 {
   "name": "stock-chart",
   "version": "1.0.0",
+  "engines": {
+    "node": "4.4.3"
+  },
   "description": "Chart the stock-price",
   "main": "server.js",
   "scripts": {
@@ -13,7 +16,6 @@
     "express": "*",
     "express-handlebars": "*",
     "express-session": "*",
-    "firebase": "^2.4.2",
-    "mongoose": "*"
+    "firebase": "^2.4.2"
   }
 }
