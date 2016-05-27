@@ -9,6 +9,7 @@ the price from start date(May 25,2009) to date will be displayed in chart.
 * Quandl
 * Handlebars
 * ExpressJS
+* Highchart/HighStock
 
 ## Demo
 Please view description panel
